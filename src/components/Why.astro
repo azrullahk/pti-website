@@ -1,0 +1,18 @@
+---
+import { reasons } from '../data/site';
+import Icon from './Icon.astro';
+---
+<section class="why soft pad" id="kenapa">
+  <div class="wrap">
+    <h2 class="h2 reveal">Dibangun dari Papua, untuk Papua</h2>
+    <div class="why__grid">
+      {reasons.map((r, i) => (
+        <div class="why__item reveal" style={`--d:${i * 0.08}s`}>
+          <Icon name={r.icon} size={32} stroke="#0F1729" width={1.5} />
+          <h3>{r.title}</h3>
+          <p>{r.body}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

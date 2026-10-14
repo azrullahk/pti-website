@@ -1,0 +1,28 @@
+---
+import { partners } from '../data/site';
+const groups = [
+  { label: 'Mitra kerja', items: partners.kerja },
+  { label: 'Didukung oleh', items: partners.dukungan },
+];
+---
+<section class="partners pad" id="mitra">
+  <div class="partners__in wrap">
+    <div class="partners__intro reveal">
+      <h2 class="h2">Tumbuh bersama mitra di Tanah Papua</h2>
+      <p class="lead">Kami bekerja sebagai mitra teknologi jangka panjang bagi perusahaan yang menggerakkan ekonomi Papua — didukung grup usaha dan perusahaan digital lokal.</p>
+    </div>
+    <div class="partners__list">
+      {groups.map((g) => (
+        <div class="pgroup">
+          <span class="eyebrow reveal">{g.label}</span>
+          {g.items.map((p, i) => (
+            <div class="prow reveal" style={`--d:${i * 0.08}s`}>
+              <div><h3>{p.name}</h3><p>{p.desc}</p></div>
+              <span class="role">{p.role}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

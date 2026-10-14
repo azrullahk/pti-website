@@ -1,0 +1,41 @@
+---
+import { company, services } from '../data/site';
+const year = new Date().getFullYear();
+---
+<section class="end pad" id="kontak">
+  <div class="end__cta reveal">
+    <h2>Mari membangun masa depan digital Papua</h2>
+    <p>Ceritakan kebutuhan Anda — kami bantu dari analisis sampai operasional.</p>
+    <div class="end__btns">
+      <a class="btn btn--light" href={`mailto:${company.email}?subject=Diskusi%20proyek%20dengan%20PTI`}>Diskusikan proyek Anda</a>
+      <a class="arrow" href={`mailto:${company.email}`}>{company.email} <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+  <footer class="footer wrap">
+    <div class="footer__grid">
+      <div class="footer__col">
+        <strong>{company.short}</strong>
+        <p style="line-height:1.6">{company.tagline}</p>
+      </div>
+      <div class="footer__col">
+        <span class="eyebrow">Layanan</span>
+        {services.map((s) => <a href="#layanan" data-tab-link={s.id}>{s.tab}</a>)}
+      </div>
+      <div class="footer__col">
+        <span class="eyebrow">Perusahaan</span>
+        <a href="#mitra">Mitra</a>
+        <a href="#talenta">Talenta lokal</a>
+        <a href="#nilai">Nilai kami</a>
+      </div>
+      <div class="footer__col">
+        <span class="eyebrow">Kontak</span>
+        <a href={`mailto:${company.email}`}>{company.email}</a>
+        <span style="line-height:1.6">{company.address}</span>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© {year} {company.name}</span>
+      <span class="mono">KBLI {company.kbli.join(' · ')}</span>
+    </div>
+  </footer>
+</section>

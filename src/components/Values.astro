@@ -1,0 +1,25 @@
+---
+import { values } from '../data/site';
+const first = values[0];
+---
+<section class="values pad" id="nilai">
+  <div class="wrap">
+    <div class="values__head reveal">
+      <h2 class="h2">Tujuh nilai yang menginspirasi cara kami bekerja</h2>
+    </div>
+    <div class="letters reveal" role="tablist" aria-label="Nilai I.N.S.P.I.R.E" data-values>
+      {values.map((v, i) => (
+        <button class="letter" type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} aria-controls="vdetail" aria-label={`${v.name} — ${v.id}`} tabindex={i === 0 ? 0 : -1}
+          data-idx={String(i + 1).padStart(2, '0')} data-name={v.name} data-id={v.id} data-desc={v.desc}>{v.letter}</button>
+      ))}
+    </div>
+    <div class="vdetail" id="vdetail" role="tabpanel" aria-live="polite" data-vdetail>
+      <div class="vdetail__name">
+        <span class="vdetail__idx" data-v="idx">01 / 07</span>
+        <span class="vdetail__en" data-v="name">{first.name}</span>
+        <span class="vdetail__id" data-v="id">{first.id}</span>
+      </div>
+      <p class="vdetail__desc" data-v="desc">{first.desc}</p>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,18 @@
+---
+const sets = [false, true];
+---
+<section class="marquee" aria-label="Mitra PTI">
+  <p class="eyebrow">Mitra PTI</p>
+  <div class="marquee__mask">
+    <div class="marquee__track">
+      {sets.map((dup) => (
+        <Fragment>
+          <span class="wm wm--ptm" aria-hidden={dup ? 'true' : undefined}>PT Mpaigelah</span>
+          <span class="wm wm--ac" aria-hidden={dup ? 'true' : undefined}><img src="/img/ac-mark.png" alt="" width="31" height="32" loading="lazy" />Adventure Carstensz</span>
+          <span class="wm wm--nx" aria-hidden={dup ? 'true' : undefined}>NEXFOOD<span> Inti Teknologi</span></span>
+          <span class="wm wm--gg" aria-hidden={dup ? 'true' : undefined}>Gladiator <span>Grup Papua</span></span>
+        </Fragment>
+      ))}
+    </div>
+  </div>
+</section>

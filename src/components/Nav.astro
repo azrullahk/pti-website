@@ -1,0 +1,23 @@
+---
+import { company } from '../data/site';
+---
+<header class="nav" data-nav>
+  <nav class="nav__in pad" aria-label="Navigasi utama">
+    <div class="nav__left">
+      <a class="brand" href={Astro.url.pathname === "/" ? "#top" : "/"} aria-label={`${company.name}, beranda`}>
+        <picture>
+          <source srcset="/img/logo-pti.webp" type="image/webp" />
+          <img src="/img/logo-pti.png" alt="" width="57" height="24" />
+        </picture>
+        <span>{company.short}</span>
+      </a>
+      <div class="nav__links">
+        <a href="#layanan">Layanan</a>
+        <a href="#mitra">Mitra</a>
+        <a href="#talenta">Talenta lokal</a>
+        <a href="#nilai">Nilai kami</a>
+      </div>
+    </div>
+    <a class="btn btn--ink" href={`mailto:${company.email}`}>Hubungi kami</a>
+  </nav>
+</header>

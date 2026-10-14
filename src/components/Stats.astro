@@ -1,0 +1,14 @@
+---
+import { services, company } from '../data/site';
+---
+<section class="stats pad" data-stats>
+  <div class="stats__head reveal">
+    <h2 class="h2">Satu mitra, dari sistem sampai pertumbuhan</h2>
+    <p class="lead">Kami membangun sistemnya, mengelola datanya, mengotomasi prosesnya, lalu membantu bisnis Anda menjangkau pasar baru.</p>
+  </div>
+  <div class="stats__nums">
+    <div class="stat"><span class="stat__n" data-count={services.length}>{services.length}</span><span class="stat__l">LINI LAYANAN</span></div>
+    <span class="stats__plus" aria-hidden="true">+</span>
+    <div class="stat"><span class="stat__n" data-count={company.kbli.length}>{company.kbli.length}</span><span class="stat__l">BIDANG USAHA KBLI</span></div>
+  </div>
+</section>
