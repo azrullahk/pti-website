@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+---
+<Base title="Verifikasi dokumen — PT Papua Teknologi Informasi" description="Periksa keaslian invoice, kuitansi, dan surat resmi PT Papua Teknologi Informasi." noindex>
+  <Nav />
+  <main id="main" class="vf pad">
+    <div class="vf__in">
+      <p class="eyebrow">Verifikasi dokumen</p>
+      <h1 class="vf__title">Periksa keaslian dokumen PTI</h1>
+      <p class="lead">Pindai QR code pada invoice, kuitansi, atau surat dari PT Papua Teknologi Informasi. Anda juga bisa memasukkan kode verifikasi yang tercetak di bawah QR code.</p>
+      <form class="vf__form" data-vf>
+        <label for="kode">Kode verifikasi</label>
+        <div>
+          <input id="kode" name="kode" autocomplete="off" spellcheck="false" placeholder="contoh: 5ths7s3x4u" required />
+          <button class="btn btn--primary" type="submit">Periksa</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</Base>
+
+<script>
+  const f = document.querySelector<HTMLFormElement>('[data-vf]');
+  f?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = (new FormData(f).get('kode') || '').toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (v) location.href = `/verifikasi/${v}`;
+  });
+</script>
+
+<style>
+  .vf { padding-block: 120px 96px; min-height: 70vh; }
+  .vf__in { max-width: 640px; margin-inline: auto; }
+  .vf__title { font-size: clamp(28px, 3.4vw, 40px); font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin: 14px 0 12px; }
+  .vf__form { margin-top: 28px; }
+  .vf__form label { display: block; font-size: 14px; color: var(--subtle); margin-bottom: 8px; }
+  .vf__form div { display: flex; gap: 10px; flex-wrap: wrap; }
+  .vf__form input { flex: 1 1 220px; min-width: 0; font: inherit; font-family: var(--mono); font-size: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; }
+  .vf__form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+</style>

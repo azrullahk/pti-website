@@ -5,10 +5,12 @@ import { company } from '../data/site';
 interface Props {
   title?: string;
   description?: string;
+  noindex?: boolean;
 }
 const {
   title = 'PT Papua Teknologi Informasi — Menghubungkan Papua, Membangun Masa Depan',
   description = 'PTI membangun sistem informasi, mengelola data, otomasi AI, dan pemasaran digital untuk instansi pemerintah dan perusahaan di Papua — dikerjakan talenta Papua.',
+  noindex = false,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ld = {
@@ -37,6 +39,7 @@ const ld = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#0F1729" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48" />

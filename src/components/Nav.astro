@@ -1,5 +1,6 @@
 ---
 import { company } from '../data/site';
+const h = Astro.url.pathname === "/" ? "" : "/";
 ---
 <header class="nav" data-nav>
   <nav class="nav__in pad" aria-label="Navigasi utama">
@@ -12,10 +13,10 @@ import { company } from '../data/site';
         <span>{company.short}</span>
       </a>
       <div class="nav__links">
-        <a href="#layanan">Layanan</a>
-        <a href="#mitra">Mitra</a>
-        <a href="#talenta">Talenta lokal</a>
-        <a href="#nilai">Nilai kami</a>
+        <a href={`${h}#layanan`}>Layanan</a>
+        <a href={`${h}#mitra`}>Mitra</a>
+        <a href={`${h}#talenta`}>Talenta lokal</a>
+        <a href={`${h}#nilai`}>Nilai kami</a>
       </div>
     </div>
     <a class="btn btn--ink" href={`mailto:${company.email}`}>Hubungi kami</a>

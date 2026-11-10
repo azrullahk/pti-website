@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import { dokumen, rupiah, type Dokumen } from '../../data/dokumen';
+
+export function getStaticPaths() {
+  return dokumen.map((d) => ({ params: { kode: d.kode }, props: { d } }));
+}
+const { d } = Astro.props as { d: Dokumen };
+const rows: [string, string][] = [
+  ['Jenis dokumen', d.jenis],
+  ['Nomor', d.nomor],
+  ['Tanggal', d.tanggal],
+  [d.jenis === 'Kuitansi' ? 'Diterima dari' : 'Kepada', d.pihak],
+  ['Uraian', d.uraian],
+  ...(d.referensi ? [['Referensi', d.referensi] as [string, string]] : []),
+  ...(d.metode ? [['Metode pembayaran', d.metode] as [string, string]] : []),
+  [d.jenis === 'Kuitansi' ? 'Jumlah diterima' : 'Nilai', rupiah(d.nilai)],
+  ['Status', d.status],
+  ...(d.sisa !== undefined ? [['Sisa kewajiban', rupiah(d.sisa)] as [string, string]] : []),
+  ['Ditandatangani', d.penandatangan],
+  ['Diterbitkan', d.diterbitkan],
+];
+---
+<Base title={`Verifikasi ${d.jenis} ${d.nomor} — PT Papua Teknologi Informasi`} description="Hasil verifikasi dokumen resmi PT Papua Teknologi Informasi." noindex>
+  <Nav />
+  <main id="main" class="vf pad">
+    <div class="vf__in">
+      <p class="eyebrow">Verifikasi dokumen</p>
+      <div class="vf__ok" role="status">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <strong>Dokumen asli</strong>
+          <span>{d.jenis} ini diterbitkan oleh PT Papua Teknologi Informasi dan tercatat di sistem kami.</span>
+        </div>
+      </div>
+
+      <h1 class="vf__title">{d.jenis} {d.nomor}</h1>
+
+      <dl class="vf__dl">
+        {rows.map(([k, v]) => (<><dt>{k}</dt><dd>{v}</dd></>))}
+      </dl>
+
+      {d.items && (
+        <section class="vf__items" aria-label="Rincian item">
+          <h2>Rincian item</h2>
+          <table>
+            <thead><tr><th>Item</th><th>Status</th><th class="r">Nilai</th></tr></thead>
+            <tbody>
+              {d.items.map((it) => (
+                <tr>
+                  <td>{it.nama}</td>
+                  <td><span class={it.dibayar ? 'tag tag--ok' : 'tag tag--due'}>{it.dibayar ? 'Dibayar' : 'Belum dibayar'}</span></td>
+                  <td class="r">{rupiah(it.nilai)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      <p class="vf__note">Cocokkan data di atas dengan dokumen yang Anda terima. Jika ada perbedaan, dokumen tersebut tidak sah — hubungi <a href="mailto:admin@pti-co.tech">admin@pti-co.tech</a>.</p>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .vf { padding-block: 120px 96px; }
+  .vf__in { max-width: 760px; margin-inline: auto; }
+  .vf__ok { display: flex; gap: 14px; align-items: flex-start; margin: 18px 0 28px; padding: 16px 18px; border-radius: 12px; background: #e9f6ec; color: #1e5f2a; }
+  .vf__ok svg { flex: none; margin-top: 2px; }
+  .vf__ok strong { display: block; font-weight: 600; font-size: 16px; }
+  .vf__ok span { font-size: 14.5px; color: #2f5d38; }
+  .vf__title { font-size: clamp(26px, 3vw, 34px); font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 20px; overflow-wrap: anywhere; }
+  .vf__dl { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid var(--line); }
+  .vf__dl dt, .vf__dl dd { padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .vf__dl dt { color: var(--subtle); }
+  .vf__dl dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .vf__items { margin-top: 36px; }
+  .vf__items h2 { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); font-weight: 500; margin-bottom: 10px; }
+  .vf__items table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .vf__items th { text-align: left; font-weight: 500; color: var(--subtle); padding: 8px 0; border-bottom: 1px solid var(--ink); }
+  .vf__items td { padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); }
+  .vf__items td + td, .vf__items th + th { padding-left: 12px; }
+  .vf__items .r { text-align: right; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .tag--ok { background: #e3f4e5; color: #2e7d32; }
+  .tag--due { background: #fef3c7; color: #b45309; }
+  .vf__note { margin-top: 28px; font-size: 14px; color: var(--muted); }
+  .vf__note a { color: var(--accent); }
+  @media (max-width: 600px) {
+    .vf { padding-block: 96px 64px; }
+    .vf__dl { grid-template-columns: 1fr; }
+    .vf__dl dt { padding-bottom: 0; border-bottom: 0; font-size: 13px; }
+    .vf__dl dd { padding-top: 2px; }
+  }
+</style>
