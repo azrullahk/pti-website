@@ -1,6 +1,6 @@
 # Website PT Papua Teknologi Informasi — pti-co.tech
 
-Website company profile PTI. Dibangun dengan **Astro 5** (hasilnya HTML statis, sangat ringan) dan **Lenis** untuk smooth scroll. Semua animasi lain memakai CSS dan sedikit JavaScript murni (±7 KB gzip). Font Onest dan JetBrains Mono di-host sendiri, jadi website tidak memanggil server pihak ketiga.
+Website company profile PTI. Dibangun dengan **Astro 5** (hasilnya HTML statis, sangat ringan) dan **Lenis** untuk smooth scroll. Semua animasi lain memakai CSS dan sedikit JavaScript murni (±7 KB gzip). Font Onest dan JetBrains Mono di-host sendiri. Satu-satunya skrip pihak ketiga adalah Google AdSense (`ca-pub-8167839029734176`), dipasang di `src/layouts/Base.astro` dan **tidak** dimuat di halaman `noindex` (verifikasi dokumen); `public/ads.txt` menyatakan PTI sebagai penerbit resmi.
 
 ## Mengubah isi website
 
