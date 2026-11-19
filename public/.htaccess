@@ -1,0 +1,12 @@
+# pti-co.tech — hosting statis Hostinger (public_html)
+
+RewriteEngine On
+
+# Verifikasi dokumen: QR code mengarah ke /verifikasi/<kode>. Semua kode dilayani satu halaman
+# (verifikasi/index.html) yang mengambil datanya dari ERP PTI.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^verifikasi/([A-Za-z0-9]{1,40})/?$ /verifikasi/index.html [L]
+
+# Halaman 404 milik website (bukan halaman bawaan Hostinger)
+ErrorDocument 404 /404.html
