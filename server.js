@@ -62,6 +62,8 @@ createServer(async (req, res) => {
     const url = new URL(req.url, 'http://x');
     let file = await resolve(url.pathname);
     let status = 200;
+    // /verifikasi/<kode> (QR code) dilayani satu halaman yang mengambil data dari ERP PTI.
+    if (!file && /^\/verifikasi\/[A-Za-z0-9]{1,40}\/?$/.test(url.pathname)) file = join(DIST, 'verifikasi', 'index.html');
     if (!file) { file = join(DIST, '404.html'); status = 404; try { await stat(file); } catch { file = join(DIST, 'index.html'); } }
     const f = await load(file);
     const headers = { ...SECURITY, 'Content-Type': TYPES[f.ext] || 'application/octet-stream', Vary: 'Accept-Encoding' };

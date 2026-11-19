@@ -7,35 +7,243 @@ import Nav from '../../components/Nav.astro';
   <main id="main" class="vf pad">
     <div class="vf__in">
       <p class="eyebrow">Verifikasi dokumen</p>
-      <h1 class="vf__title">Periksa keaslian dokumen PTI</h1>
-      <p class="lead">Pindai QR code pada invoice, kuitansi, atau surat dari PT Papua Teknologi Informasi. Anda juga bisa memasukkan kode verifikasi yang tercetak di bawah QR code.</p>
-      <form class="vf__form" data-vf>
-        <label for="kode">Kode verifikasi</label>
-        <div>
-          <input id="kode" name="kode" autocomplete="off" spellcheck="false" placeholder="contoh: 5ths7s3x4u" required />
-          <button class="btn btn--primary" type="submit">Periksa</button>
+
+      <!-- Form: tampil bila alamat tidak membawa kode (/verifikasi/) -->
+      <section data-vf-form-wrap>
+        <h1 class="vf__title">Periksa keaslian dokumen PTI</h1>
+        <p class="lead">Pindai QR code pada invoice, kuitansi, atau surat dari PT Papua Teknologi Informasi. Anda juga bisa memasukkan kode verifikasi yang tercetak di bawah QR code.</p>
+        <form class="vf__form" data-vf>
+          <label for="kode">Kode verifikasi</label>
+          <div>
+            <input id="kode" name="kode" autocomplete="off" spellcheck="false" placeholder="contoh: 5ths7s3x4u" required />
+            <button class="btn btn--primary" type="submit">Periksa</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Hasil: diisi skrip dari data ERP bila alamat membawa kode (/verifikasi/<kode>) -->
+      <section data-vf-hasil hidden aria-live="polite">
+        <p class="vf__memuat" data-vf-memuat>Memeriksa kode <span class="mono" data-vf-kode></span>…</p>
+
+        <div class="vf__ban" data-vf-ban hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path data-vf-ikon fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><strong data-vf-ban-judul></strong><span data-vf-ban-teks></span></div>
         </div>
-      </form>
+
+        <div data-vf-detail hidden>
+          <h1 class="vf__title" data-vf-judul></h1>
+          <dl class="vf__dl" data-vf-dl></dl>
+          <section class="vf__items" data-vf-items hidden aria-label="Rincian">
+            <h2>Rincian</h2>
+            <table>
+              <thead><tr><th>Item</th><th data-vf-th-ket>Keterangan</th><th class="r">Nilai</th></tr></thead>
+              <tbody data-vf-tbody></tbody>
+            </table>
+          </section>
+          <p class="vf__note">Cocokkan data di atas dengan dokumen yang Anda terima. Jika ada perbedaan, dokumen tersebut tidak sah — hubungi <a href="mailto:admin@pti-co.tech">admin@pti-co.tech</a>.</p>
+        </div>
+
+        <p class="vf__lagi"><a href="/verifikasi/">Periksa kode lain</a></p>
+      </section>
     </div>
   </main>
 </Base>
 
 <script>
-  const f = document.querySelector<HTMLFormElement>('[data-vf]');
-  f?.addEventListener('submit', (e) => {
+  // Data verifikasi diambil langsung dari ERP PTI (sumber tunggal), jadi dokumen baru langsung bisa diverifikasi
+  // tanpa membangun ulang website. Endpoint hanya memberi data yang memang tercetak di dokumen.
+  const API = 'https://pti-erp.web.app/api/verify/';
+  const POLA = /^[a-z0-9]{6,16}$/;
+  const JENIS: Record<string, string> = { INV: 'Invoice', KWT: 'Kuitansi', SK: 'Surat kuasa', SURAT: 'Surat' };
+  const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const IKON = { ok: 'M20 6 9 17l-5-5', x: 'M18 6 6 18M6 6l12 12', info: 'M12 8v5m0 3.5v.5' };
+
+  interface Hasil {
+    ditemukan: boolean;
+    kode?: string;
+    jenis?: string;
+    nomor?: string;
+    tanggal?: string;
+    status?: 'sah' | 'batal';
+    diterbitkan_oleh?: string;
+    pihak?: string;
+    perihal?: string;
+    nilai?: number | null;
+    rincian?: Array<{ nama: string; nilai: number; keterangan?: string }>;
+    catatan?: string | null;
+    referensi?: string | null;
+  }
+
+  const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const rupiah = (n: number) => 'Rp' + n.toLocaleString('id-ID');
+  const tanggal = (iso: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    return m ? `${Number(m[3])} ${BULAN[Number(m[2]) - 1]} ${m[1]}` : iso;
+  };
+  const bersih = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Form: arahkan ke /verifikasi/<kode>
+  const form = document.querySelector<HTMLFormElement>('[data-vf]');
+  form?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const v = (new FormData(f).get('kode') || '').toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const v = bersih((new FormData(form).get('kode') || '').toString());
     if (v) location.href = `/verifikasi/${v}`;
   });
+
+  // Kode dari alamat: /verifikasi/<kode> (QR code) atau ?kode=<kode>
+  const dariPath = location.pathname.replace(/\/+$/, '').split('/').pop() ?? '';
+  const kode = bersih(location.pathname.startsWith('/verifikasi/') && dariPath !== 'verifikasi' ? dariPath : new URLSearchParams(location.search).get('kode') ?? '');
+
+  function banner(jenis: 'ok' | 'batal' | 'gagal', judul: string, teks: string) {
+    const b = $('[data-vf-ban]');
+    b.className = `vf__ban vf__ban--${jenis}`;
+    $('[data-vf-ikon]').setAttribute('d', jenis === 'ok' ? IKON.ok : jenis === 'batal' ? IKON.x : IKON.info);
+    $('[data-vf-ban-judul]').textContent = judul;
+    $('[data-vf-ban-teks]').textContent = teks;
+    b.hidden = false;
+    $('[data-vf-memuat]').hidden = true;
+  }
+
+  function tampilkan(d: Hasil) {
+    const jenis = JENIS[d.jenis ?? ''] ?? 'Dokumen';
+    const kwt = d.jenis === 'KWT';
+    document.title = `Verifikasi ${jenis} ${d.nomor} — PT Papua Teknologi Informasi`;
+    if (d.status === 'batal') {
+      banner('batal', 'Dokumen dibatalkan', `${jenis} ini pernah diterbitkan PT Papua Teknologi Informasi, tetapi sudah dibatalkan dan tidak berlaku lagi.`);
+    } else {
+      banner('ok', 'Dokumen asli', `${jenis} ini diterbitkan oleh ${d.diterbitkan_oleh || 'PT Papua Teknologi Informasi'} dan tercatat di sistem kami.`);
+    }
+    $('[data-vf-judul]').textContent = `${jenis} ${d.nomor}`;
+
+    const baris: Array<[string, string]> = [
+      ['Jenis dokumen', jenis],
+      ['Nomor', d.nomor ?? ''],
+      ['Tanggal', tanggal(d.tanggal ?? '')],
+      [kwt ? 'Diterima dari' : 'Kepada', d.pihak ?? ''],
+      [kwt ? 'Untuk pembayaran' : 'Perihal', d.perihal ?? ''],
+    ];
+    if (d.referensi) baris.push(['Referensi', d.referensi]);
+    if (typeof d.nilai === 'number') baris.push([kwt ? 'Jumlah diterima' : 'Nilai', rupiah(d.nilai)]);
+    baris.push(['Status', d.status === 'batal' ? 'Dibatalkan' : 'Sah']);
+    if (d.catatan) baris.push(['Catatan', d.catatan]);
+    baris.push(['Diterbitkan oleh', d.diterbitkan_oleh || 'PT Papua Teknologi Informasi']);
+    baris.push(['Kode verifikasi', d.kode ?? kode]);
+
+    const dl = $('[data-vf-dl]');
+    dl.replaceChildren();
+    for (const [k, v] of baris) {
+      const dt = document.createElement('dt');
+      dt.textContent = k;
+      const dd = document.createElement('dd');
+      dd.textContent = v;
+      dl.append(dt, dd);
+    }
+
+    const rincian = d.rincian ?? [];
+    if (rincian.length) {
+      const adaKet = rincian.some((r) => r.keterangan);
+      $('[data-vf-th-ket]').hidden = !adaKet;
+      const tb = $('[data-vf-tbody]');
+      tb.replaceChildren();
+      for (const r of rincian) {
+        const tr = document.createElement('tr');
+        const nama = document.createElement('td');
+        nama.textContent = r.nama;
+        tr.append(nama);
+        if (adaKet) {
+          const ket = document.createElement('td');
+          if (r.keterangan) {
+            const tag = document.createElement('span');
+            const lunas = /^dibayar$|^lunas$/i.test(r.keterangan);
+            tag.className = `tag ${lunas ? 'tag--ok' : /belum/i.test(r.keterangan) ? 'tag--due' : 'tag--plain'}`;
+            tag.textContent = r.keterangan;
+            ket.append(tag);
+          }
+          tr.append(ket);
+        }
+        const nilai = document.createElement('td');
+        nilai.className = 'r';
+        nilai.textContent = rupiah(r.nilai);
+        tr.append(nilai);
+        tb.append(tr);
+      }
+      $('[data-vf-items]').hidden = false;
+    }
+    $('[data-vf-detail]').hidden = false;
+  }
+
+  async function periksa() {
+    $('[data-vf-form-wrap]').hidden = true;
+    $('[data-vf-hasil]').hidden = false;
+    $('[data-vf-kode]').textContent = kode;
+    if (!POLA.test(kode)) {
+      banner('gagal', 'Kode tidak dikenal', `Kode “${kode}” tidak sesuai format kode verifikasi PTI. Periksa kembali kode di bawah QR code.`);
+      return;
+    }
+    try {
+      const res = await fetch(API + encodeURIComponent(kode), { headers: { Accept: 'application/json' } });
+      if (res.status === 404) {
+        banner('gagal', 'Dokumen tidak ditemukan', `Kode “${kode}” tidak terdaftar di sistem PT Papua Teknologi Informasi. Bila kode sudah benar, dokumen tersebut tidak sah — hubungi admin@pti-co.tech.`);
+        return;
+      }
+      if (!res.ok) throw new Error(String(res.status));
+      const d = (await res.json()) as Hasil;
+      if (!d.ditemukan) {
+        banner('gagal', 'Dokumen tidak ditemukan', `Kode “${kode}” tidak terdaftar di sistem PT Papua Teknologi Informasi.`);
+        return;
+      }
+      tampilkan(d);
+    } catch {
+      banner('gagal', 'Belum bisa memeriksa', 'Sistem verifikasi sedang tidak dapat dihubungi. Coba muat ulang halaman ini beberapa saat lagi, atau hubungi admin@pti-co.tech.');
+    }
+  }
+
+  if (kode) void periksa();
 </script>
 
-<style>
+<style is:global>
   .vf { padding-block: 120px 96px; min-height: 70vh; }
-  .vf__in { max-width: 640px; margin-inline: auto; }
-  .vf__title { font-size: clamp(28px, 3.4vw, 40px); font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin: 14px 0 12px; }
+  .vf__in { max-width: 720px; margin-inline: auto; }
+  .vf__title { font-size: clamp(26px, 3.2vw, 38px); font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin: 14px 0 12px; overflow-wrap: anywhere; }
   .vf__form { margin-top: 28px; }
   .vf__form label { display: block; font-size: 14px; color: var(--subtle); margin-bottom: 8px; }
   .vf__form div { display: flex; gap: 10px; flex-wrap: wrap; }
   .vf__form input { flex: 1 1 220px; min-width: 0; font: inherit; font-family: var(--mono); font-size: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; }
   .vf__form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .vf__memuat { margin-top: 18px; color: var(--muted); }
+  .vf__ban { display: flex; gap: 14px; align-items: flex-start; margin: 18px 0 28px; padding: 16px 18px; border-radius: 12px; }
+  .vf__ban svg { flex: none; margin-top: 2px; }
+  .vf__ban strong { display: block; font-weight: 600; font-size: 16px; }
+  .vf__ban span { font-size: 14.5px; }
+  .vf__ban--ok { background: #e9f6ec; color: #1e5f2a; }
+  .vf__ban--ok span { color: #2f5d38; }
+  .vf__ban--batal { background: #fdecec; color: #9b1c1c; }
+  .vf__ban--batal span { color: #7a2a2a; }
+  .vf__ban--gagal { background: #fef6e7; color: #8a4b08; }
+  .vf__ban--gagal span { color: #6b4a1a; }
+  .vf__dl { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid var(--line); margin-top: 20px; }
+  .vf__dl dt, .vf__dl dd { padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .vf__dl dt { color: var(--subtle); }
+  .vf__dl dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .vf__items { margin-top: 36px; }
+  .vf__items h2 { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); font-weight: 500; margin-bottom: 10px; }
+  .vf__items table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .vf__items th { text-align: left; font-weight: 500; color: var(--subtle); padding: 8px 0; border-bottom: 1px solid var(--ink); }
+  .vf__items td { padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink); }
+  .vf__items td + td, .vf__items th + th { padding-left: 12px; }
+  .vf__items .r { text-align: right; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .tag--ok { background: #e3f4e5; color: #2e7d32; }
+  .tag--due { background: #fef3c7; color: #b45309; }
+  .tag--plain { background: #eef1f5; color: var(--muted); }
+  .vf__note { margin-top: 28px; font-size: 14px; color: var(--muted); }
+  .vf__note a, .vf__lagi a { color: var(--accent); }
+  .vf__lagi { margin-top: 18px; font-size: 14px; }
+  [hidden] { display: none !important; }
+  @media (max-width: 600px) {
+    .vf { padding-block: 96px 64px; }
+    .vf__dl { grid-template-columns: 1fr; }
+    .vf__dl dt { padding-bottom: 0; border-bottom: 0; font-size: 13px; }
+    .vf__dl dd { padding-top: 2px; }
+  }
 </style>
